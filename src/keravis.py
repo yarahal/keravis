@@ -3,8 +3,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-from utils import pixel_scaling, find_closest_factors, clone_function_1, guided_relu, guided_linear, clone_function_2
-from math import log
+from utils import pixel_scaling, find_closest_factors, clone_function_1, clone_function_2
+import cv2
 
 
 def conv_layer_activations(model,
@@ -33,7 +33,7 @@ def conv_layer_activations(model,
     if nested_model is None:
         conv_layer = model.get_layer(layer)
         modified_model = tf.keras.Model(
-            inputs=nested_model.input, outputs=conv_layer.output)
+            inputs=model.input, outputs=conv_layer.output)
     else:
         nested_model = model.get_layer(nested_model)
         conv_layer = nested_model.get_layer(layer)
@@ -68,6 +68,7 @@ def conv_layer_activations(model,
 
 
 def feature_space_tsne(model,
+                       layer=None,
                        dataset=None,
                        X=None,
                        y=None,
@@ -177,62 +178,6 @@ def feature_space_pca(model,
     ax.legend(*scatter.legend_elements())
     if title is not None:
         ax.set_title(title)
-
-
-def saliency_occlusion(model,
-                       test_img,
-                       class_idx,
-                       title=None):
-    '''
-    Visualizes the saliency map of an image using occulsion
-
-    Parameters
-    ----------
-    model : keras Model
-    test_img : ndarray
-        Image for which to find saliency map
-    class_idx : int
-        Index of test_img label wrt to model output
-
-    Outputs
-    -------
-    Saliency map of test_img by occlusion
-    '''
-    # find saliency map dimensions
-    mask_width, mask_height = test_img.shape[0]//4, test_img.shape[1]//4
-    mask_stride = 1
-    width, height = (
-        test_img.shape[0]-mask_width)//mask_stride, (test_img.shape[1]-mask_height)//mask_stride
-
-    # create saliency map
-    saliency_map = np.zeros((width, height))
-
-    # fill saliency map by sliding mask across image
-    for i in range(0, width, mask_stride):
-        for j in range(0, height, mask_stride):
-            img_clipped = np.copy(test_img)
-            img_clipped[i:i+mask_width, j:j+mask_height, :] = 0
-            saliency_map[i, j] = np.array(
-                model(np.expand_dims(img_clipped, 0))).flatten()[class_idx]
-
-    # plot result
-    width, height = pixel_scaling(
-        test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
-                                                  height), gridspec_kw={'wspace': 0, 'hspace': 0})
-    if title is not None:
-        fig.suptitle(title)
-    ax1.imshow(test_img, aspect='auto')
-    ax1.grid(False)
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-    ax1.set_title("test image")
-    ax2.imshow(saliency_map, aspect='auto',
-               cmap='jet', interpolation='bilinear')
-    ax2.grid(False)
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.set_title("saliency map")
 
 
 def saliency_backprop(model,
@@ -454,6 +399,104 @@ def conv_features_gradient_ascent(model,
         feature_gradients = np.max(
             np.abs(feature_gradients[0, :, :, :]), axis=2)
         ax.imshow(feature_gradients, aspect='auto')
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+
+def maximally_activating_conv_features(model,
+                                       layer,
+                                       dataset=None,
+                                       X=None,
+                                       nested_model=None,
+                                       channel=None,
+                                       title=None):
+    '''
+    Visualizes maximally activating patches of an intermediate neuron in the given layer and channel 
+
+    Parameters
+    ----------
+    model : keras.Model
+    layer : str
+        Layer name
+    test_img : ndarray
+        Image for which to look at intermediate features
+    channel : int
+    n_neurons : int
+
+    Outputs
+    -------
+    A grid of gradients of n_neurons random neurons in layer wrt to test_img
+    '''
+
+    # create modified_model whose output is output of conv_layer
+    if nested_model is None:
+        conv_layer = model.get_layer(layer)
+        modified_model = tf.keras.Model(
+            inputs=model.input, outputs=conv_layer.output)
+    else:
+        nested_model = model.get_layer(nested_model)
+        conv_layer = nested_model.get_layer(layer)
+        x = model.input
+        for layer in model.layers:
+            if layer == nested_model:
+                break
+            x = layer(x)
+        x = tf.keras.Model(nested_model.input, conv_layer.output)(x)
+        modified_model = tf.keras.Model(inputs=model.input, outputs=x)
+
+    # create modified model for guided backprop
+    modified_model = tf.keras.models.clone_model(
+        modified_model, modified_model.input, clone_function_2)
+    modified_model.set_weights(modified_model.get_weights())
+
+    # pick a random channel if channel is not given
+    if channel is None:
+        channel = np.random.randint(0, conv_layer.filters)
+    # pick a random neuron
+    random_neuron = (np.random.randint(
+        0, conv_layer.output_shape[1]), np.random.randint(0, conv_layer.output_shape[2]))
+
+    # set X to a batch of images if dataset is given
+    if dataset is not None:
+        X, _ = dataset.next()
+
+    # find and sort neuron activations of images
+    neuron_activations = []
+    for img in X:
+        neuron_activations.append((np.array(modified_model(np.expand_dims(img, 0)))[
+                                  0, random_neuron[0], random_neuron[1], channel]))
+    image_idxs = np.argsort(neuron_activations)
+
+    width, height = pixel_scaling(X.shape[1])*5, pixel_scaling(X.shape[2])
+    fig, axs = plt.subplots(1, 5, figsize=(width, height), gridspec_kw={
+                            'wspace': 0, 'hspace': 0})
+    if title is not None:
+        fig.suptitle(title)
+    axs = axs.flatten()
+    # get 5 images with highest activation values
+    for k in range(len(image_idxs)-1, len(image_idxs)-6, -1):
+        ax = axs[k-len(image_idxs)+1]
+        img = X[image_idxs[k]]
+        # convert image to tensor
+        tensor_img = tf.convert_to_tensor(np.expand_dims(img, 0))
+        # compute gradient of neuron wrt image
+        with tf.GradientTape() as tape:
+            tape.watch(tensor_img)
+            output = modified_model(tensor_img)[
+                0, random_neuron[0], random_neuron[1], channel]
+        gradient = tape.gradient(output, tensor_img)
+        # find receptive field of neuron in image
+        bounding_rect_coord = cv2.boundingRect(cv2.findNonZero(
+            cv2.cvtColor(gradient[0].numpy(), cv2.COLOR_RGB2GRAY)))
+        bounding_rect = np.ones((img.shape[0], img.shape[1], 3))*255
+        bounding_rect = cv2.rectangle(bounding_rect, (bounding_rect_coord[0], bounding_rect_coord[1]),
+                                      (bounding_rect_coord[0]+bounding_rect_coord[2],
+                                       bounding_rect_coord[1]+bounding_rect_coord[3]),
+                                      color=(0, 0, 0), thickness=1)
+        # plot image and patch
+        ax.imshow(img, aspect='auto')
+        ax.imshow(bounding_rect, alpha=0.1, aspect='auto')
         ax.grid(False)
         ax.set_xticks([])
         ax.set_yticks([])

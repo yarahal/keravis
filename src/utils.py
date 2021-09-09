@@ -1,3 +1,4 @@
+import numpy as np
 from math import sqrt, log
 import tensorflow as tf
 
@@ -18,6 +19,11 @@ def find_closest_factors(n):
     return x, int(y)
 
 
+def normalize(img):
+    img -= np.min(img)
+    img /= np.max(img) + 1e-7
+
+
 def clone_function_1(layer):
     layer_config = layer.get_config()
     if 'activation' in layer_config and (layer_config['activation'] == 'sigmoid' or layer_config['activation'] == 'softmax'):
@@ -28,7 +34,7 @@ def clone_function_1(layer):
 
 def clone_function_2(layer):
     if isinstance(layer, tf.keras.Model):
-        return tf.keras.models.clone_model(layer, layer.input, clone_function)
+        return tf.keras.models.clone_model(layer, layer.input, clone_function_2)
     layer_config = layer.get_config()
     if 'activation' in layer_config and layer_config['activation'] == 'relu':
         layer_config['activation'] = guided_relu
