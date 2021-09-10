@@ -20,8 +20,11 @@ def find_closest_factors(n):
 
 
 def normalize(img):
-    img -= np.min(img)
-    img /= np.max(img) + 1e-7
+    '''
+    Image minmax normalization
+    '''
+    img -= np.min(img, axis=(0, 1))
+    img /= np.max(img, axis=(0, 1)) + 1e-7
 
 
 def clone_function_1(layer):

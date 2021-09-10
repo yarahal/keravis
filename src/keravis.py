@@ -1,9 +1,12 @@
+from src.utils import normalize
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 import matplotlib.pyplot as plt
+import matplotlib.patches as ptc
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-from utils import pixel_scaling, find_closest_factors, clone_function_1, clone_function_2
+from utils import pixel_scaling, find_closest_factors, normalize, clone_function_1, clone_function_2
 import cv2
 
 
@@ -13,20 +16,20 @@ def conv_layer_activations(model,
                            nested_model=None,
                            title=None):
     '''
-    Visualizes activations of `layer` corresponding to `test_img` in a grid
+    Visualize activations of `layer` corresponding to `test_img` in a grid
 
     Parameters
     ----------
     model : keras.Model
+        Model.
     layer : str
-        Layer name
-    nested_model : str
+        Layer whose activations to visualize.
     test_img : ndarray
-        Image for which to look at activations of
-
-    Outputs
-    -------
-    A grid of activations of the given layer corresponding to the test image
+        Image for which to look at activations of.
+    nested_model : str, default=None
+        Name of nested model, if any.
+    title : str, default=None
+        Title of the figure.
     '''
 
     # create modified_model whose output is output of conv_layer
@@ -67,30 +70,30 @@ def conv_layer_activations(model,
         ax.set_yticks([])
 
 
-def feature_space_tsne(model,
-                       layer=None,
-                       dataset=None,
-                       X=None,
-                       y=None,
-                       title=None):
+def feature_space(model,
+                  dataset=None,
+                  X=None,
+                  y=None,
+                  kind='tsne',
+                  title=None):
     '''
-    Visualizes activations of the last fully-connected layer before the output layer
-    on a set of images in 2-dimensional space using tSNE
+    Visualize feature space of `model` on a set of images `X` in 2-dimensional space using tSNE or PCA
 
     Parameters
     ----------
-    model : keras Model
-    dataset : keras DataIterator
-        Batched dataset
+    model : keras.Model
+        Model.
+    dataset : keras.preprocessing.image.DataIterator, default=None
+        Batched dataset.
         If given, X and y are ignored.
-    X : ndarray
-        Set of images
-    y : ndarray
-        Set of labels
-
-    Outputs
-    -------
-    2-dimensional tSNE visualization of activations of last fully-connected layer before the classifier corresponding to a batch in dataset or to a given set of images X.
+    X : ndarray, default=None
+        Set of images.
+    y : ndarray, default=None
+        Set of labels.
+    kind : str, default='tsne'
+        Type of plot. One of 'tsne' or 'pca'.
+    title : str, default=None
+        Title of the figure.
     '''
     # find the fc layer
     fc_layer = model.layers[-2]
@@ -111,64 +114,12 @@ def feature_space_tsne(model,
     fc_layer_activations = np.array(fc_layer_activations)
 
     # fit and transform TSNE on fc_layer_activations
-    tsne = TSNE(n_components=2)
-    transformed_X = tsne.fit_transform(fc_layer_activations)
-
-    # plot result
-    fig, ax = plt.subplots(figsize=(7, 7))
-    scatter = ax.scatter(transformed_X[:, 0], transformed_X[:, 1], c=y)
-    ax.set_xlabel('component 1')
-    ax.set_ylabel('component 2')
-    ax.legend(*scatter.legend_elements())
-    if title is not None:
-        ax.set_title(title)
-
-
-def feature_space_pca(model,
-                      dataset=None,
-                      X=None,
-                      y=None,
-                      title=None):
-    '''
-    Visualizes activations of the last fully-connected layer before the output layer
-    on a set of images in 2-dimensional space using PCA
-
-    Parameters
-    ----------
-    model : keras Model
-    dataset : keras DataIterator
-        Batched dataset
-        If given, X and y are ignored.
-    X : ndarray
-        Set of images
-    y : ndarray
-        Set of labels
-
-    Outputs
-    -------
-    2-dimensional PCA visualization of activations of last fully-connected layer before the classifier corresponding to a batch in dataset or to a given set of images X.
-    '''
-    # find the fc layer
-    fc_layer = model.layers[-2]
-
-    # create model whose output is output of fc_layer
-    modified_model = tf.keras.Model(
-        inputs=model.input, outputs=fc_layer.output)
-
-    # set X and y to a batch of images and labels if dataset is given
-    if dataset is not None:
-        X, y = dataset.next()
-
-    # store fc layer activations for images in X
-    fc_layer_activations = []
-    for img in X:
-        fc_layer_activations.append(
-            np.array(modified_model(np.expand_dims(img, 0))).flatten())
-    fc_layer_activations = np.array(fc_layer_activations)
-
-    # fit and transform PCA on fc_layer_activations
-    pca = PCA(n_components=2)
-    transformed_X = pca.fit_transform(fc_layer_activations)
+    if kind == 'tsne':
+        tsne = TSNE(n_components=2)
+        transformed_X = tsne.fit_transform(fc_layer_activations)
+    elif kind == 'pca':
+        pca = PCA(n_components=2)
+        transformed_X = pca.fit_transform(fc_layer_activations)
 
     # plot result
     fig, ax = plt.subplots(figsize=(7, 7))
@@ -185,17 +136,18 @@ def saliency_backprop(model,
                       class_idx=0,
                       title=None):
     '''
-    Visualizes the saliency map of an image using backprop
+    Visualize the saliency map of `test_img` using vanilla backprop
 
     Parameters
     ----------
-    model : keras Model
+    model : keras.Model
+        Model.
     test_img : ndarray
-        Image for which to find saliency map
-
-    Outputs
-    -------
-    Saliency map of test_img by backprop
+        Image for which to find saliency map of.
+    class_idx : int, default=0
+        Class index of image.
+    title : str, default=None
+        Title of the figure.
     '''
 
     # create modified_model with softmax activation of output layer removed to get raw class scores
@@ -212,6 +164,7 @@ def saliency_backprop(model,
         output = modified_model(tensor_img)[:, class_idx]
     gradients = tape.gradient(output, tensor_img)
     saliency_map = np.max(np.abs(gradients[0, :, :, :]), axis=2)
+    normalize(saliency_map)
 
     # plot result
     width, height = pixel_scaling(
@@ -238,17 +191,18 @@ def saliency_guided_backprop(model,
                              class_idx,
                              title=None):
     '''
-    Visualizes the saliency map of an image using guided backprop
+    Visualize the saliency map of `test_img` using guided backprop
 
     Parameters
     ----------
-    model : keras Model
+    model : keras.Model
+        Model.
     test_img : ndarray
-        Image for which to find saliency map
-
-    Outputs
-    -------
-    Saliency map of test_img by guided backprop
+        Image for which to find saliency map of.
+    class_idx : int, default=0
+        Class index of image.
+    title : str, default=None
+        Title of the figure.
     '''
 
     # create modified model for guided backprop
@@ -265,6 +219,64 @@ def saliency_guided_backprop(model,
         output = modified_model(tensor_img)[:, class_idx]
     gradients = tape.gradient(output, tensor_img)
     saliency_map = np.max(np.abs(gradients[0, :, :, :]), axis=2)
+    normalize(saliency_map)
+
+    # plot result
+    width, height = pixel_scaling(
+        test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
+                                                  height), gridspec_kw={'wspace': 0, 'hspace': 0})
+    if title is not None:
+        fig.suptitle(title)
+    ax1.imshow(test_img, aspect='auto')
+    ax1.grid(False)
+    ax1.set_xticks([])
+    ax1.set_yticks([])
+    ax1.set_title("test image")
+    ax2.imshow(saliency_map, aspect='auto',
+               cmap='jet', interpolation='bilinear')
+    ax2.grid(False)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    ax2.set_title("saliency map")
+
+
+def saliency_occlusion(model,
+                       test_img,
+                       class_idx,
+                       title=None):
+    '''
+    Visualize the saliency map of `test_img` using occlusion
+
+    Parameters
+    ----------
+    model : keras.Model
+        Model.
+    test_img : ndarray
+        Image for which to find saliency map of.
+    class_idx : int, default=0
+        Class index of image.
+    title : str, default=None
+        Title of the figure.
+    '''
+
+    # find saliency map dimensions
+    mask_width, mask_height = test_img.shape[0]//4, test_img.shape[1]//4
+    mask_stride = 1
+    width, height = (
+        test_img.shape[0]-mask_width)//mask_stride, (test_img.shape[1]-mask_height)//mask_stride
+
+    # create saliency map
+    saliency_map = np.zeros((width, height))
+
+    # fill saliency map by sliding mask across image
+    for i in range(0, width, mask_stride):
+        for j in range(0, height, mask_stride):
+            img_clipped = np.copy(test_img)
+            img_clipped[i:i+mask_width, j:j+mask_height, :] = 0
+            saliency_map[i, j] = np.array(
+                model(np.expand_dims(img_clipped, 0))).flatten()[class_idx]
+    normalize(saliency_map)
 
     # plot result
     width, height = pixel_scaling(
@@ -287,121 +299,59 @@ def saliency_guided_backprop(model,
 
 
 def classifier_gradient_ascent(model,
-                               layer,
-                               test_img,
-                               channel=None,
-                               n_neurons=10,
+                               class_idx,
+                               dim,
                                title=None):
     '''
-    Visualizes gradients of intermediate neurons in the given layer corresponding to a test image using guided backprop
+    Visualize a synthesized image corresponding to maximal class activation
 
     Parameters
     ----------
-    model : keras Model
-    layer : keras Layer
-        Layer 
-    test_img : ndarray
-        Image for which to look at intermediate features
-    channel : int
-    n_neurons : int
-
-    Outputs
-    -------
-    A grid of gradients of n_neurons random neurons in layer wrt to test_img
+    model : keras.Model
+        Model.
+    class_idx : int
+        Class index for which to find maximally activating image.
+    dim : tuple
+        (width,height,channels) of generated image.
+    title : str, default=None
+        Title of the figure.
     '''
 
-    # create model whose output is output of layer
-    modified_model = tf.keras.Model(inputs=model.input, outputs=layer.output)
+    # create model with softmax activation of output layer removed
+    modified_model = tf.keras.models.clone_model(
+        model, model.input, clone_function_1)
+    modified_model.set_weights(model.get_weights())
+
+    # create random image
+    img = np.random.randn(dim[0], dim[1], dim[2])
 
     # convert image to tensor
-    tensor_img = tf.convert_to_tensor(np.expand_dims(test_img, 0))
+    tensor_img = tf.convert_to_tensor(np.expand_dims(img, 0), dtype='float32')
 
-    # choose a random channel if not given and random neurons
-    if channel is None:
-        channel = np.random.randint(0, layer.filters)
-    random_neuron_idxs = list(zip(np.random.randint(
-        0, layer.output_shape[1], n_neurons), np.random.randint(0, layer.output_shape[2], n_neurons)))
-
-    # compute and plot gradients of neurons wrt pixels of input image
-    rows, cols = find_closest_factors(n_neurons)
-    n_pixels = test_img.shape[0]
-    fig, axs = plt.subplots(rows, cols, figsize=(
-        0.02*n_pixels*cols, 0.02*n_pixels*rows), gridspec_kw={'wspace': 0, 'hspace': 0})
-    if title is not None:
-        fig.suptitle(title)
-    axs = axs.flatten()
-    for k in range(n_neurons):
-        ax = axs[k]
-        i, j = random_neuron_idxs[k][0], random_neuron_idxs[k][1]
+    # maximize class score wrt image pixels
+    for n in tf.range(2048):
         with tf.GradientTape() as tape:
             tape.watch(tensor_img)
-            output = modified_model(tensor_img)[:, i, j, channel]
-        feature_gradients = tape.gradient(output, tensor_img)
-        feature_gradients = np.max(
-            np.abs(feature_gradients[0, :, :, :]), axis=2)
-        ax.imshow(feature_gradients, aspect='auto')
-        ax.grid(False)
-        ax.set_xticks([])
-        ax.set_yticks([])
+            output = modified_model(tensor_img)[0, class_idx]
+        gradient = tape.gradient(output, tensor_img)
+        gradient /= tf.math.reduce_std(gradient) + 1e-7
+        tensor_img += 0.05 * gradient
+        # regularize
+        if n % 100 == 0:
+            tensor_img = tfa.image.gaussian_filter2d(tensor_img, sigma=1)
 
+    result = tensor_img[0].numpy()
+    normalize(result)
 
-def conv_features_gradient_ascent(model,
-                                  layer,
-                                  test_img,
-                                  channel=None,
-                                  n_neurons=10,
-                                  title=None):
-    '''
-    Visualizes gradients of intermediate neurons in the given layer corresponding to a test image using guided backprop
-
-    Parameters
-    ----------
-    model : keras Model
-    layer : keras Layer
-        Layer 
-    test_img : ndarray
-        Image for which to look at intermediate features
-    channel : int
-    n_neurons : int
-
-    Outputs
-    -------
-    A grid of gradients of n_neurons random neurons in layer wrt to test_img
-    '''
-
-    # create model whose output is output of layer
-    modified_model = tf.keras.Model(inputs=model.input, outputs=layer.output)
-
-    # convert image to tensor
-    tensor_img = tf.convert_to_tensor(np.expand_dims(test_img, 0))
-
-    # choose a random channel if not given and random neurons
-    if channel is None:
-        channel = np.random.randint(0, layer.filters)
-    random_neuron_idxs = list(zip(np.random.randint(
-        0, layer.output_shape[1], n_neurons), np.random.randint(0, layer.output_shape[2], n_neurons)))
-
-    # compute and plot gradients of neurons wrt pixels of input image
-    rows, cols = find_closest_factors(n_neurons)
-    n_pixels = test_img.shape[0]
-    fig, axs = plt.subplots(rows, cols, figsize=(
-        0.02*n_pixels*cols, 0.02*n_pixels*rows), gridspec_kw={'wspace': 0, 'hspace': 0})
+    # plot result
+    fig, ax = plt.subplots(
+        figsize=(pixel_scaling(dim[0]), pixel_scaling(dim[1])))
     if title is not None:
-        fig.suptitle(title)
-    axs = axs.flatten()
-    for k in range(n_neurons):
-        ax = axs[k]
-        i, j = random_neuron_idxs[k][0], random_neuron_idxs[k][1]
-        with tf.GradientTape() as tape:
-            tape.watch(tensor_img)
-            output = modified_model(tensor_img)[:, i, j, channel]
-        feature_gradients = tape.gradient(output, tensor_img)
-        feature_gradients = np.max(
-            np.abs(feature_gradients[0, :, :, :]), axis=2)
-        ax.imshow(feature_gradients, aspect='auto')
-        ax.grid(False)
-        ax.set_xticks([])
-        ax.set_yticks([])
+        ax.set_title(title)
+    ax.imshow(result, aspect='auto')
+    ax.grid(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
 
 
 def maximally_activating_conv_features(model,
@@ -412,21 +362,26 @@ def maximally_activating_conv_features(model,
                                        channel=None,
                                        title=None):
     '''
-    Visualizes maximally activating patches of an intermediate neuron in the given layer and channel 
+    Visualizes maximally activating patches in `X` of a random intermediate neuron in `layer`, `channel`
 
     Parameters
     ----------
     model : keras.Model
+        Model.
     layer : str
-        Layer name
-    test_img : ndarray
-        Image for which to look at intermediate features
-    channel : int
-    n_neurons : int
-
-    Outputs
-    -------
-    A grid of gradients of n_neurons random neurons in layer wrt to test_img
+        Layer whose activations to visualize.
+    dataset : keras.preprocessing.image.DataIterator, default=None
+        Batched dataset.
+        If given, X and y are ignored.
+    X : ndarray, default=None
+        Set of images.
+    nested_model : str, default=None
+        Name of nested model, if any.
+    channel : int, default=None
+        Channel index. 
+        If not given, channel is randomly sampled.
+    title : str, default=None
+        Title of the figure.
     '''
 
     # create modified_model whose output is output of conv_layer
@@ -486,17 +441,17 @@ def maximally_activating_conv_features(model,
             output = modified_model(tensor_img)[
                 0, random_neuron[0], random_neuron[1], channel]
         gradient = tape.gradient(output, tensor_img)
+        gradient = gradient[0].numpy()
+        gradient[gradient < 1e-5] = 0
         # find receptive field of neuron in image
-        bounding_rect_coord = cv2.boundingRect(cv2.findNonZero(
-            cv2.cvtColor(gradient[0].numpy(), cv2.COLOR_RGB2GRAY)))
-        bounding_rect = np.ones((img.shape[0], img.shape[1], 3))*255
-        bounding_rect = cv2.rectangle(bounding_rect, (bounding_rect_coord[0], bounding_rect_coord[1]),
-                                      (bounding_rect_coord[0]+bounding_rect_coord[2],
-                                       bounding_rect_coord[1]+bounding_rect_coord[3]),
-                                      color=(0, 0, 0), thickness=1)
+        if gradient.shape[2] == 3:
+            gradient = np.mean(gradient, axis=2)
+        bounding_rect_coord = cv2.boundingRect(cv2.findNonZero(gradient))
+        bounding_rect = ptc.Rectangle((bounding_rect_coord[0], bounding_rect_coord[1]), bounding_rect_coord[2],
+                                      bounding_rect_coord[3], linewidth=2, edgecolor='k', facecolor='none')
         # plot image and patch
         ax.imshow(img, aspect='auto')
-        ax.imshow(bounding_rect, alpha=0.1, aspect='auto')
+        ax.add_patch(bounding_rect)
         ax.grid(False)
         ax.set_xticks([])
         ax.set_yticks([])
