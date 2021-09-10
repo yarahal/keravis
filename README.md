@@ -9,6 +9,7 @@ keravis is a high-level API for ConvNet visualizations in Keras. As of v1.0, it 
 5. Maximally activating patches of an intermediate neuron in a set of images
 
 with support for nested pretrained models.
+This project was inspired by lecture 14 of Stanford's CS231n: Convolutional Neural Networks for Visual Recognition http://cs231n.stanford.edu/
 
 ## Installation
 ## Usage
@@ -16,10 +17,3 @@ with support for nested pretrained models.
 ## MNIST Examples
 
 
-## References
-
-- Stanford CS231n: Convolutional Neural Networks for Visual Recognition http://cs231n.stanford.edu/
-- Feature Visualization https://distill.pub/2017/feature-visualization/
-- TensorFlow DeepDream tutorial https://www.tensorflow.org/tutorials/generative/deepdream
-- PyTorch CNN Visualizations by utkuozbulak https://github.com/utkuozbulak/pytorch-cnn-visualizations
-- keras-vis by raghakot https://github.com/raghakot/keras-vis
