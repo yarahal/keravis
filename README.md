@@ -5,16 +5,18 @@ keravis is a high-level API for ConvNet visualizations in Keras. As of v1.0, it 
 1. Convolutional layer activations
 2. 2-dimensional feature space representations
 3. Saliency maps (vanilla backprop, guided backprop, and occlusion)
-4. Synthetic maximally-activating images of classifier output
-5. Maximally activating patches of an intermediate neuron in a set of images
+4. Generated images that maximally activate classifier output
+5. Patches in a set of images that maximally activate an intermediate neuron
 
 with support for nested pretrained models.
 
-This is a hobby project that was inspired by lecture 14 of Stanford's CS231n: Convolutional Neural Networks for Visual Recognition http://cs231n.stanford.edu/. It is not yet optimized for serious use (see keras-vis instead).
+This is a hobby project that was inspired by lecture 14 of Stanford's CS231n: Convolutional Neural Networks for Visual Recognition http://cs231n.stanford.edu/. It is not yet optimized for serious use (see [keras-vis](https://github.com/raghakot/keras-vis) instead).
 
 ## Installation
-## Usage
-
+You can install keravis using pip
+```bash
+pip install keravis
+```
 ## MNIST Examples
 ```python
 from keravis import feature_space
