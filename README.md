@@ -18,7 +18,7 @@ You can install keravis using pip
 pip install keravis
 ```
 ## Usage
-Read the documentation.
+Read the [documentation](https://keravis.readthedocs.io/en/latest/?)
 
 ## Sample Visualizations
 Below are sample visualizations from a small convolutional network trained on MNIST
