@@ -17,7 +17,12 @@ You can install keravis using pip
 ```bash
 pip install keravis
 ```
-## MNIST Examples
+## Usage
+Read the documentation.
+
+## Sample Visualizations
+Below are sample visualizations from a small convolutional network trained on MNIST
+
 ```python
 from keravis import feature_space
 feature_space(model,X=x_test[:5000],y=y_test[:5000],kind='tsne')
