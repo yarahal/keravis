@@ -77,11 +77,11 @@ Saliency maps
     title : str, default=None
         Title of the figure.
 
-Generated images that maximally activate classifier output
+Generated image that maximally activates classifier output
 **********************************************************
 
-``classifier_gradient_ascent(model, class_idx, dim, title=None)``
- Visualize a synthesized image corresponding to maximal class activation of `class_idx`
+``maximal_class_score_input(model, class_idx, dim, title=None)``
+ Visualize a generated image corresponding to a maximal class score of `class_idx`
 *Args:*
     model : keras.Model
         Model.
@@ -95,7 +95,7 @@ Generated images that maximally activate classifier output
 Patches in a set of images that maximally activate an intermediate neuron
 *************************************************************************
 
-``maximally_activating_conv_features(model, layer, dataset=None, X=None, nested_model = None, channel=None, title=None)``
+``maximally_activating_patches(model, layer, dataset=None, X=None, nested_model = None, channel=None, title=None)``
  Visualizes maximally activating patches in `X` of a random intermediate neuron in `layer`, `channel`
 *Args:*
     model : keras.Model

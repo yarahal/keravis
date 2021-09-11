@@ -297,12 +297,12 @@ def saliency_occlusion(model,
     ax2.set_title("saliency map")
 
 
-def classifier_gradient_ascent(model,
-                               class_idx,
-                               dim,
-                               title=None):
+def maximal_class_score_input(model,
+                              class_idx,
+                              dim,
+                              title=None):
     '''
-    Visualize a synthesized image corresponding to maximal class activation of `class_idx`
+    Visualize a generated image corresponding to a maximal class score of `class_idx`
 
     Parameters
     ----------
@@ -353,13 +353,13 @@ def classifier_gradient_ascent(model,
     ax.set_yticks([])
 
 
-def maximally_activating_conv_features(model,
-                                       layer,
-                                       dataset=None,
-                                       X=None,
-                                       nested_model=None,
-                                       channel=None,
-                                       title=None):
+def maximally_activating_patches(model,
+                                 layer,
+                                 dataset=None,
+                                 X=None,
+                                 nested_model=None,
+                                 channel=None,
+                                 title=None):
     '''
     Visualizes maximally activating patches in `X` of a random intermediate neuron in `layer`, `channel`
 
