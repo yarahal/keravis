@@ -1,7 +1,8 @@
 keravis API Documentation
 =========================
 
-**Convolutional layer activations**
+Convolutional layer activations
+-------------------------------
 
 ``conv_layer_activations(model, layer, test_img, nested_model=None, title=None)``
  Visualize activations of `layer` corresponding to `test_img` in a grid
@@ -17,7 +18,8 @@ keravis API Documentation
     title : str, default=None
         Title of the figure.
 
-**2-dimensional feature space representations**
+2-dimensional feature space representations
+-------------------------------------------
 
 ``feature_space(model, dataset=None, X=None, y=None, kind='tsne', title=None)``
  Visualize feature space of `model` on a set of images `X` in 2-dimensional space using tSNE or PCA
@@ -36,7 +38,8 @@ keravis API Documentation
     title : str, default=None
         Title of the figure.
 
-**Saliency maps**
+Saliency maps
+-------------
 
 ``saliency_backprop(model, test_img, class_idx=0, title=None)``
  Visualize the saliency map of `test_img` using vanilla backprop
@@ -74,7 +77,8 @@ keravis API Documentation
     title : str, default=None
         Title of the figure.
 
-**Generated images that maximally activate classifier output**
+Generated images that maximally activate classifier output
+----------------------------------------------------------
 
 ``classifier_gradient_ascent(model, class_idx, dim, title=None)``
  Visualize a synthesized image corresponding to maximal class activation of `class_idx`
@@ -88,7 +92,8 @@ keravis API Documentation
     title : str, default=None
         Title of the figure.
 
-**Patches in a set of images that maximally activate an intermediate neuron**
+Patches in a set of images that maximally activate an intermediate neuron
+-------------------------------------------------------------------------
 
 ``maximally_activating_conv_features(model, layer, dataset=None, X=None, nested_model = None, channel=None, title=None)``
  Visualizes maximally activating patches in `X` of a random intermediate neuron in `layer`, `channel`
