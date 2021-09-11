@@ -303,7 +303,7 @@ def classifier_gradient_ascent(model,
                                dim,
                                title=None):
     '''
-    Visualize a synthesized image corresponding to maximal class activation
+    Visualize a synthesized image corresponding to maximal class activation of `class_idx`
 
     Parameters
     ----------
