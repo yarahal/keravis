@@ -10,7 +10,7 @@ keravis is a high-level API for ConvNet visualizations in Keras. As of v1.0, it 
 
 with support for nested pretrained models.
 
-This is a hobby project that was inspired by lecture 14 of Stanford's CS231n: Convolutional Neural Networks for Visual Recognition http://cs231n.stanford.edu/. It is not yet optimized for serious use (see [keras-vis](https://github.com/raghakot/keras-vis) instead).
+This is a hobby project and is not optimized for serious use (see [keras-vis](https://github.com/raghakot/keras-vis) instead).
 
 ## Installation
 
