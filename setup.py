@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="keravis",
-    version="1.0.1",
+    version="1.0.2",
     author="Yara Halawi",
     author_email="yarahalawi12@gmail.com",
     description="A high-level API for ConvNet visualizations in Keras",

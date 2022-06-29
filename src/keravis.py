@@ -299,7 +299,6 @@ def saliency_occlusion(model,
 
 def maximal_class_score_input(model,
                               class_idx,
-                              dim,
                               title=None):
     '''
     Visualize a generated image corresponding to a maximal class score of `class_idx`
@@ -310,8 +309,6 @@ def maximal_class_score_input(model,
         Model.
     class_idx : int
         Class index for which to find maximally activating image.
-    dim : tuple
-        (width,height,channels) of generated image.
     title : str, default=None
         Title of the figure.
     '''
@@ -322,6 +319,7 @@ def maximal_class_score_input(model,
     modified_model.set_weights(model.get_weights())
 
     # create random image
+    dim = modified_model.layers[0].input_shape
     img = np.random.randn(dim[0], dim[1], dim[2])
 
     # convert image to tensor

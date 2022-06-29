@@ -1,6 +1,6 @@
 # keravis
 
-keravis is a high-level API for ConvNet visualizations in Keras. As of v1.0, it supports visualizations of
+keravis is a high-level API for CNN feature visualizations in Keras. As of v1.0, it supports visualizations of
 
 1. Convolutional layer activations
 2. 2-dimensional feature space representations
@@ -51,7 +51,7 @@ saliency_guided_backprop(model,test_img,class_idx=7)
 
 ```python
 from keravis import maximal_class_score_input
-maximal_class_score_input(model,class_idx=5,dim=(28,28,1))
+maximal_class_score_input(model,class_idx=5)
 ```
 
 ![gradient_ascent_5](https://user-images.githubusercontent.com/65565946/132919308-2040b537-bdee-439b-b130-1f63c6547d4c.png)
