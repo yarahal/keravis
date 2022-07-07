@@ -330,10 +330,93 @@ def saliency_occlusion(model,
     ax2.set_yticks([])
     ax2.set_title("saliency map")
 
+def saliency_grad_cam(model,
+                      test_img,
+                      class_idx,
+                      title=None,
+                      vistype='next'):
+    '''
+    Visualize the saliency map of `test_img` using Grad-CAM
 
-def maximal_class_score_input(model,
-                              class_idx,
-                              title=None):
+    Parameters
+    ----------
+    model : keras.Model
+        Model.
+    test_img : ndarray
+        Image for which to find saliency map of.
+    class_idx : int, default=0
+        Class index of image.
+    title : str, default=None
+        Title of the figure.
+    vistype : str, default=overlay
+        Visualization type. One of 'overlay' or 'next'.
+    '''
+
+    # create modified model for guided backprop
+    modified_model = tf.keras.models.clone_model(
+        model, model.input, clone_function_2)
+    modified_model.set_weights(model.get_weights())
+
+    # convert image to tensor
+    x = tf.convert_to_tensor(np.expand_dims(test_img, 0))
+
+    # compute gradient of output wrt to last convolutional layer
+    with tf.GradientTape() as tape:
+        tape.watch(x)
+        last_conv_output = None
+        for layer in modified_model.layers:
+            x = layer(x)
+            if isinstance(layer,tf.keras.layers.Conv2D):
+                last_conv_output = x
+        output = x[:,class_idx]
+    gradients = tape.gradient(output, last_conv_output)
+    # find weights of activation maps
+    alpha = tf.keras.layers.GlobalAveragePooling2D()(gradients).numpy()
+    # find linear combination of weights and activation maps
+    saliency_map = np.zeros((last_conv_output.shape[1],last_conv_output.shape[2]))
+    for i in range(len(alpha)):
+        saliency_map += alpha[:,i] * last_conv_output[0,:,:,i]
+    # apply relu to linear combination
+    saliency_map = np.maximum(saliency_map,0)
+    normalize(saliency_map)
+
+    # plot result
+    if vistype == 'next':
+        width, height = pixel_scaling(
+            test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
+                                                      height), gridspec_kw={'wspace': 0, 'hspace': 0})
+        if title is not None:
+            fig.suptitle(title)
+        ax1.imshow(test_img, aspect='auto',cmap='gray')
+        ax1.grid(False)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax1.set_title("test image")
+        ax2.imshow(saliency_map, aspect='auto',
+                   cmap='jet', interpolation='bilinear')
+        ax2.grid(False)
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        ax2.set_title("saliency map")
+    elif vistype == 'overlay':
+        saliency_map = cv2.resize(saliency_map,(test_img.shape[0],test_img.shape[1]))
+        width, height = pixel_scaling(
+            test_img.shape[0]), pixel_scaling(test_img.shape[1])
+        fig, ax = plt.subplots(figsize=(width, height))
+        if title is not None:
+            ax.set_title(title)
+        ax.imshow(test_img, aspect='auto',cmap='gray')
+        ax.imshow(saliency_map, aspect='auto',
+                  cmap='jet', interpolation='bilinear', alpha=0.5)
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+
+def class_model(model,
+                class_idx,
+                title=None):
     '''
     Visualize a generated image corresponding to a maximal class score of `class_idx`
 
