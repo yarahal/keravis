@@ -1,6 +1,6 @@
 # keravis
 
-keravis is a high-level API for CNN feature visualizations in Keras. As of v1.0, it supports visualizations of
+keravis is a high-level API for CNN feature visualizations in Keras. It supports visualizations of
 
 1. Convolutional layer activations
 2. 2-dimensional feature space representations
@@ -10,8 +10,8 @@ keravis is a high-level API for CNN feature visualizations in Keras. As of v1.0,
 
 with support for nested pretrained models.
 
-This is a hobby project and is not optimized for serious use (see [keras-vis](https://github.com/raghakot/keras-vis) instead).
-
+This is a hobby project and is not optimized for serious use.
+<!--
 ## Installation
 
 You can install keravis using pip
@@ -22,7 +22,7 @@ pip install keravis
 
 ## Usage
 
-Read the [documentation](https://keravis.readthedocs.io/en/latest/?)
+Read the [documentation](https://keravis.readthedocs.io/en/latest/?)-->
 
 ## Sample Visualizations
 
