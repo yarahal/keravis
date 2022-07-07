@@ -3,10 +3,10 @@
 keravis is a high-level API for CNN feature visualizations in Keras. It supports visualizations of
 
 1. Convolutional layer activations
-2. 2-dimensional feature space representations
-3. Saliency maps (vanilla backprop, guided backprop, and occlusion)
-4. Generated inputs that result in maximal class scores
-5. Patches in a set of images that maximally activate an intermediate neuron
+2. Feature space visualizations
+3. Saliency maps (guided Grad-CAM, guided backprop, vanilla backprop, and occlusion)
+4. Class model visualization
+5. Patches that maximally activate an intermediate neuron
 
 with support for nested pretrained models.
 
@@ -44,11 +44,17 @@ saliency_guided_backprop(model,test_img,class_idx=2,vistype='next')
 ![image](https://user-images.githubusercontent.com/65565946/177818298-26502c04-945d-4a36-ba80-83c97612b31a.png)
 
 
+```python
+from keravis import saliency_grad_cam
+saliency_grad_cam(model,test_img,class_idx=4,vistype='next')
+```
+
+![image](https://user-images.githubusercontent.com/65565946/177871138-ec73a685-5409-47e2-85f1-53eccfecfa40.png)
 
 
 ```python
-from keravis import maximal_class_score_input
-maximal_class_score_input(model,class_idx=5)
+from keravis import class_model
+class_model(model,class_idx=5)
 ```
 
 ![image](https://user-images.githubusercontent.com/65565946/177795902-fd01d2e2-0ac4-42fd-8f81-15fd3a7be793.png)
@@ -59,3 +65,7 @@ maximally_activating_patches(model,'conv2d_1',X=x_test)
 ```
 
 ![image](https://user-images.githubusercontent.com/65565946/177796065-4151b122-d1c8-466e-b3bc-433fb9bae7b3.png)
+
+## References
+[1] Simonyan, Karen, Andrea Vedaldi, and Andrew Zisserman. "Deep inside convolutional networks: Visualising image classification models and saliency maps." arXiv preprint arXiv:1312.6034 (2013). <br />
+[2] Selvaraju, Ramprasaath R., et al. "Grad-cam: Visual explanations from deep networks via gradient-based localization." Proceedings of the IEEE international conference on computer vision. 2017.
