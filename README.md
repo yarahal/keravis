@@ -37,7 +37,7 @@ feature_space(model,X=x_test[:5000],y=y_test[:5000],kind='tsne')
 
 ```python
 from keravis import saliency_guided_backprop
-saliency_guided_backprop(model,test_img,class_idx=6)
+saliency_guided_backprop(model,test_img,class_idx=2,vistype='next')
 ```
 
 <!--![image](https://user-images.githubusercontent.com/65565946/177793859-86f2ccf1-b349-4fdd-8369-7f613d339d81.png)![image](https://user-images.githubusercontent.com/65565946/177793893-bba171bc-c36a-4181-939e-b476a58aca26.png)-->
