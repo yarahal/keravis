@@ -44,12 +44,12 @@ saliency_guided_backprop(model,test_img,class_idx=2,vistype='next')
 ![image](https://user-images.githubusercontent.com/65565946/177818298-26502c04-945d-4a36-ba80-83c97612b31a.png)
 
 
-```python
+<!--```python
 from keravis import saliency_grad_cam
 saliency_grad_cam(model,test_img,class_idx=4,vistype='next')
 ```
 
-![image](https://user-images.githubusercontent.com/65565946/177871138-ec73a685-5409-47e2-85f1-53eccfecfa40.png)
+![image](https://user-images.githubusercontent.com/65565946/177871138-ec73a685-5409-47e2-85f1-53eccfecfa40.png)-->
 
 
 ```python
