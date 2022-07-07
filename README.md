@@ -4,7 +4,7 @@ keravis is a high-level API for CNN feature visualizations in Keras. It supports
 
 1. Convolutional layer activations
 2. Feature space visualizations
-3. Saliency maps (guided Grad-CAM, guided backprop, vanilla backprop, and occlusion)
+3. Saliency maps
 4. Class model visualization
 5. Patches that maximally activate an intermediate neuron
 
