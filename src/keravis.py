@@ -122,9 +122,11 @@ def feature_space(model,
 
     # plot result
     fig, ax = plt.subplots(figsize=(7, 7))
-    scatter = ax.scatter(transformed_X[:, 0], transformed_X[:, 1], c=y)
+    scatter = ax.scatter(
+        transformed_X[:, 0], transformed_X[:, 1], c=y, edgecolor='white', alpha=0.8)
     ax.set_xlabel('component 1')
     ax.set_ylabel('component 2')
+    ax.grid(alpha=0.2)
     ax.legend(*scatter.legend_elements())
     if title is not None:
         ax.set_title(title)
@@ -133,7 +135,8 @@ def feature_space(model,
 def saliency_backprop(model,
                       test_img,
                       class_idx=0,
-                      title=None):
+                      title=None,
+                      vistype='overlay'):
     '''
     Visualize the saliency map of `test_img` using vanilla backprop
 
@@ -147,6 +150,8 @@ def saliency_backprop(model,
         Class index of image.
     title : str, default=None
         Title of the figure.
+    vistype : str, default=overlay
+        Visualization type. One of 'overlay' or 'next'.
     '''
 
     # create modified_model with softmax activation of output layer removed to get raw class scores
@@ -166,29 +171,43 @@ def saliency_backprop(model,
     normalize(saliency_map)
 
     # plot result
-    width, height = pixel_scaling(
-        test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
-                                                  height), gridspec_kw={'wspace': 0, 'hspace': 0})
-    if title is not None:
-        fig.suptitle(title)
-    ax1.imshow(test_img, aspect='auto')
-    ax1.grid(False)
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-    ax1.set_title("test image")
-    ax2.imshow(saliency_map, aspect='auto',
-               cmap='jet', interpolation='bilinear')
-    ax2.grid(False)
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.set_title("saliency map")
+    if vistype == 'next':
+        width, height = pixel_scaling(
+            test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
+                                                      height), gridspec_kw={'wspace': 0, 'hspace': 0})
+        if title is not None:
+            fig.suptitle(title)
+        ax1.imshow(test_img, aspect='auto')
+        ax1.grid(False)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax1.set_title("test image")
+        ax2.imshow(saliency_map, aspect='auto',
+                   cmap='jet', interpolation='bilinear', alpha=0.5)
+        ax2.grid(False)
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        ax2.set_title("saliency map")
+    elif vistype == 'overlay':
+        width, height = pixel_scaling(
+            test_img.shape[0]), pixel_scaling(test_img.shape[1])
+        fig, ax = plt.subplots(figsize=(width, height))
+        if title is not None:
+            ax.set_title(title)
+        ax.imshow(test_img, aspect='auto')
+        ax.imshow(saliency_map, aspect='auto',
+                  cmap='jet', interpolation='bilinear', alpha=0.5)
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
 def saliency_guided_backprop(model,
                              test_img,
                              class_idx,
-                             title=None):
+                             title=None,
+                             vistype='overlay'):
     '''
     Visualize the saliency map of `test_img` using guided backprop
 
@@ -202,6 +221,8 @@ def saliency_guided_backprop(model,
         Class index of image.
     title : str, default=None
         Title of the figure.
+    vistype : str, default=overlay
+        Visualization type. One of 'overlay' or 'next'.
     '''
 
     # create modified model for guided backprop
@@ -221,23 +242,36 @@ def saliency_guided_backprop(model,
     normalize(saliency_map)
 
     # plot result
-    width, height = pixel_scaling(
-        test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
-                                                  height), gridspec_kw={'wspace': 0, 'hspace': 0})
-    if title is not None:
-        fig.suptitle(title)
-    ax1.imshow(test_img, aspect='auto')
-    ax1.grid(False)
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-    ax1.set_title("test image")
-    ax2.imshow(saliency_map, aspect='auto',
-               cmap='jet', interpolation='bilinear')
-    ax2.grid(False)
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.set_title("saliency map")
+    if vistype == 'next':
+        width, height = pixel_scaling(
+            test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
+                                                      height), gridspec_kw={'wspace': 0, 'hspace': 0})
+        if title is not None:
+            fig.suptitle(title)
+        ax1.imshow(test_img, aspect='auto')
+        ax1.grid(False)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax1.set_title("test image")
+        ax2.imshow(saliency_map, aspect='auto',
+                   cmap='jet', interpolation='bilinear', alpha=0.5)
+        ax2.grid(False)
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        ax2.set_title("saliency map")
+    elif vistype == 'overlay':
+        width, height = pixel_scaling(
+            test_img.shape[0]), pixel_scaling(test_img.shape[1])
+        fig, ax = plt.subplots(figsize=(width, height))
+        if title is not None:
+            ax.set_title(title)
+        ax.imshow(test_img, aspect='auto')
+        ax.imshow(saliency_map, aspect='auto',
+                  cmap='jet', interpolation='bilinear', alpha=0.5)
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
 def saliency_occlusion(model,
@@ -320,7 +354,7 @@ def maximal_class_score_input(model,
 
     # create random image
     dim = modified_model.layers[0].input_shape
-    img = np.random.randn(dim[0], dim[1], dim[2])
+    img = np.random.randn(dim[1], dim[2], dim[3])
 
     # convert image to tensor
     tensor_img = tf.convert_to_tensor(np.expand_dims(img, 0), dtype='float32')
@@ -342,7 +376,7 @@ def maximal_class_score_input(model,
 
     # plot result
     fig, ax = plt.subplots(
-        figsize=(pixel_scaling(dim[0]), pixel_scaling(dim[1])))
+        figsize=(pixel_scaling(dim[1]), pixel_scaling(dim[2])))
     if title is not None:
         ax.set_title(title)
     ax.imshow(result, aspect='auto')
