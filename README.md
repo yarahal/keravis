@@ -40,7 +40,9 @@ from keravis import saliency_guided_backprop
 saliency_guided_backprop(model,test_img,class_idx=6)
 ```
 
-![image](https://user-images.githubusercontent.com/65565946/177793859-86f2ccf1-b349-4fdd-8369-7f613d339d81.png)![image](https://user-images.githubusercontent.com/65565946/177793893-bba171bc-c36a-4181-939e-b476a58aca26.png)
+<!--![image](https://user-images.githubusercontent.com/65565946/177793859-86f2ccf1-b349-4fdd-8369-7f613d339d81.png)![image](https://user-images.githubusercontent.com/65565946/177793893-bba171bc-c36a-4181-939e-b476a58aca26.png)-->
+![image](https://user-images.githubusercontent.com/65565946/177818298-26502c04-945d-4a36-ba80-83c97612b31a.png)
+
 
 
 
