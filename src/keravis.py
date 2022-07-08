@@ -461,7 +461,7 @@ def class_model(model,
 
     # create random image
     dim = modified_model.layers[0].input_shape
-    img = np.random.randn(dim[1], dim[2], dim[3])
+    img = np.zeros((dim[1], dim[2], dim[3]))
 
     # convert image to tensor
     tensor_img = tf.convert_to_tensor(np.expand_dims(img, 0), dtype='float32')
@@ -475,7 +475,7 @@ def class_model(model,
         gradient /= tf.math.reduce_std(gradient) + 1e-7
         tensor_img += 0.05 * gradient
         # regularize
-        if n % 100 == 0:
+        if n % 10 == 0:
             tensor_img = tfa.image.gaussian_filter2d(tensor_img, sigma=1)
 
     result = tensor_img[0].numpy()
