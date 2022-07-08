@@ -475,7 +475,7 @@ def class_model(model,
         gradient /= tf.math.reduce_std(gradient) + 1e-7
         tensor_img += 0.05 * gradient
         # regularize
-        if n % 10 == 0:
+        if n % 5 == 0:
             tensor_img = tfa.image.gaussian_filter2d(tensor_img, sigma=1)
 
     result = tensor_img[0].numpy()
