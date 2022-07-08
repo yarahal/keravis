@@ -76,7 +76,7 @@ class_model(model,class_idx=14)
 
 
 #### Feature Visualizations
-Image patches which maximally activate a neuron in a convolutional layer in a small CNN trained on MNIST are shown below
+Image patches which maximally activate a neuron in a small CNN trained on MNIST are shown below
 ```python
 from keravis import image_patches
 image_patches(model,'conv2d_1',X=x_test)
