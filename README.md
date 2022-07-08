@@ -71,7 +71,7 @@ from keravis import class_model
 class_model(model,class_idx=14)
 ```
 
-![class_model_vgg_14_3](https://user-images.githubusercontent.com/65565946/178026204-dfb6314d-52cb-4d3f-a42c-7ad5c896fe2c.png)
+![class_model_vgg_14_5](https://user-images.githubusercontent.com/65565946/178027182-baeb8d46-a1df-44e5-abf3-439c61782a66.png)
 ![class_model_vgg_14_4](https://user-images.githubusercontent.com/65565946/178026784-50435bd9-2ee0-4a52-86d7-6599ca77d2cf.png)
 
 
