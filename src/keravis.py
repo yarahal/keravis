@@ -15,7 +15,7 @@ def conv_layer_activations(model,
                            nested_model=None,
                            title=None):
     '''
-    Visualize activations of `layer` corresponding to `test_img` in a grid
+    Visualize activations of `layer` corresponding to `test_img`
 
     Parameters
     ----------
@@ -24,7 +24,7 @@ def conv_layer_activations(model,
     layer : str
         Layer whose activations to visualize.
     test_img : ndarray
-        Image for which to look at activations of.
+        Input image.
     nested_model : str, default=None
         Name of nested model, if any.
     title : str, default=None
@@ -63,7 +63,7 @@ def conv_layer_activations(model,
     for i in range(n_channels):
         ax = axs[i]
         activation = activations[0, :, :, i]
-        ax.imshow(activation, cmap='gray')
+        ax.imshow(activation, cmap='jet')
         ax.grid(False)
         ax.set_xticks([])
         ax.set_yticks([])
@@ -76,7 +76,7 @@ def feature_space(model,
                   kind='tsne',
                   title=None):
     '''
-    Visualize feature space of `model` on a set of images `X` in 2-dimensional space using tSNE or PCA
+    Visualize feature space of `model` on a set of images `X` in a 2-dimensional space using tSNE or PCA
 
     Parameters
     ----------
@@ -104,6 +104,9 @@ def feature_space(model,
     # set X and y to a batch of images and labels if dataset is given
     if dataset is not None:
         X, y = dataset.next()
+
+    if len(y.shape) > 1 and y.shape[1] > 1:
+        y = np.argmax(y, axis=1)
 
     # store fc_layer activations for images in X
     fc_layer_activations = []
@@ -145,7 +148,7 @@ def saliency_backprop(model,
     model : keras.Model
         Model.
     test_img : ndarray
-        Image for which to find saliency map of.
+        Input image.
     class_idx : int, default=0
         Class index of image.
     title : str, default=None
@@ -216,7 +219,7 @@ def saliency_guided_backprop(model,
     model : keras.Model
         Model.
     test_img : ndarray
-        Image for which to find saliency map of.
+        Input image.
     class_idx : int, default=0
         Class index of image.
     title : str, default=None
@@ -277,7 +280,8 @@ def saliency_guided_backprop(model,
 def saliency_occlusion(model,
                        test_img,
                        class_idx,
-                       title=None):
+                       title=None,
+                       vistype='next'):
     '''
     Visualize the saliency map of `test_img` using occlusion
 
@@ -286,11 +290,13 @@ def saliency_occlusion(model,
     model : keras.Model
         Model.
     test_img : ndarray
-        Image for which to find saliency map of.
+        Input image.
     class_idx : int, default=0
         Class index of image.
     title : str, default=None
         Title of the figure.
+    vistype : str, default=overlay
+        Visualization type. One of 'overlay' or 'next'.
     '''
 
     # find saliency map dimensions
@@ -307,34 +313,50 @@ def saliency_occlusion(model,
         for j in range(0, height, mask_stride):
             img_clipped = np.copy(test_img)
             img_clipped[i:i+mask_width, j:j+mask_height, :] = 0
-            saliency_map[i, j] = np.array(
+            saliency_map[i, j] = -np.array(
                 model(np.expand_dims(img_clipped, 0))).flatten()[class_idx]
     normalize(saliency_map)
 
     # plot result
-    width, height = pixel_scaling(
-        test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
-                                                  height), gridspec_kw={'wspace': 0, 'hspace': 0})
-    if title is not None:
-        fig.suptitle(title)
-    ax1.imshow(test_img, aspect='auto')
-    ax1.grid(False)
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-    ax1.set_title("test image")
-    ax2.imshow(saliency_map, aspect='auto',
-               cmap='jet', interpolation='bilinear')
-    ax2.grid(False)
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.set_title("saliency map")
+    if vistype == 'next':
+        width, height = pixel_scaling(
+            test_img.shape[0])*2, pixel_scaling(test_img.shape[1])
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(width,
+                                                      height), gridspec_kw={'wspace': 0, 'hspace': 0})
+        if title is not None:
+            fig.suptitle(title)
+        ax1.imshow(test_img, aspect='auto', cmap='gray')
+        ax1.grid(False)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax1.set_title("test image")
+        ax2.imshow(saliency_map, aspect='auto',
+                   cmap='jet', interpolation='bilinear')
+        ax2.grid(False)
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        ax2.set_title("saliency map")
+    elif vistype == 'overlay':
+        saliency_map = cv2.resize(
+            saliency_map, (test_img.shape[0], test_img.shape[1]))
+        width, height = pixel_scaling(
+            test_img.shape[0]), pixel_scaling(test_img.shape[1])
+        fig, ax = plt.subplots(figsize=(width, height))
+        if title is not None:
+            ax.set_title(title)
+        ax.imshow(test_img, aspect='auto', cmap='gray')
+        ax.imshow(saliency_map, aspect='auto',
+                  cmap='jet', interpolation='bilinear', alpha=0.5)
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
 
 def saliency_grad_cam(model,
                       test_img,
                       class_idx,
                       title=None,
-                      vistype='next'):
+                      vistype='overlay'):
     '''
     Visualize the saliency map of `test_img` using Grad-CAM
 
@@ -343,7 +365,7 @@ def saliency_grad_cam(model,
     model : keras.Model
         Model.
     test_img : ndarray
-        Image for which to find saliency map of.
+        Input image.
     class_idx : int, default=0
         Class index of image.
     title : str, default=None
@@ -358,7 +380,7 @@ def saliency_grad_cam(model,
     modified_model.set_weights(model.get_weights())
 
     # convert image to tensor
-    x = tf.convert_to_tensor(np.expand_dims(test_img, 0))
+    x = tf.convert_to_tensor(np.expand_dims(test_img, 0), dtype='float32')
 
     # compute gradient of output wrt to last convolutional layer
     with tf.GradientTape() as tape:
@@ -366,18 +388,19 @@ def saliency_grad_cam(model,
         last_conv_output = None
         for layer in modified_model.layers:
             x = layer(x)
-            if isinstance(layer,tf.keras.layers.Conv2D):
+            if isinstance(layer, tf.keras.layers.Conv2D):
                 last_conv_output = x
-        output = x[:,class_idx]
+        output = x[0, class_idx]
     gradients = tape.gradient(output, last_conv_output)
     # find weights of activation maps
-    alpha = tf.keras.layers.GlobalAveragePooling2D()(gradients).numpy()
+    alpha = np.mean(gradients.numpy(), axis=(1, 2))
     # find linear combination of weights and activation maps
-    saliency_map = np.zeros((last_conv_output.shape[1],last_conv_output.shape[2]))
-    for i in range(len(alpha)):
-        saliency_map += alpha[:,i] * last_conv_output[0,:,:,i]
+    saliency_map = np.zeros(
+        (last_conv_output.shape[1], last_conv_output.shape[2]))
+    for i in range(alpha.shape[1]):
+        saliency_map += alpha[:, i] * last_conv_output[0, :, :, i]
     # apply relu to linear combination
-    saliency_map = np.maximum(saliency_map,0)
+    saliency_map = np.maximum(saliency_map, 0)
     normalize(saliency_map)
 
     # plot result
@@ -388,7 +411,7 @@ def saliency_grad_cam(model,
                                                       height), gridspec_kw={'wspace': 0, 'hspace': 0})
         if title is not None:
             fig.suptitle(title)
-        ax1.imshow(test_img, aspect='auto',cmap='gray')
+        ax1.imshow(test_img, aspect='auto', cmap='gray')
         ax1.grid(False)
         ax1.set_xticks([])
         ax1.set_yticks([])
@@ -400,13 +423,14 @@ def saliency_grad_cam(model,
         ax2.set_yticks([])
         ax2.set_title("saliency map")
     elif vistype == 'overlay':
-        saliency_map = cv2.resize(saliency_map,(test_img.shape[0],test_img.shape[1]))
+        saliency_map = cv2.resize(
+            saliency_map, (test_img.shape[0], test_img.shape[1]))
         width, height = pixel_scaling(
             test_img.shape[0]), pixel_scaling(test_img.shape[1])
         fig, ax = plt.subplots(figsize=(width, height))
         if title is not None:
             ax.set_title(title)
-        ax.imshow(test_img, aspect='auto',cmap='gray')
+        ax.imshow(test_img, aspect='auto', cmap='gray')
         ax.imshow(saliency_map, aspect='auto',
                   cmap='jet', interpolation='bilinear', alpha=0.5)
         ax.grid(False)
@@ -443,7 +467,7 @@ def class_model(model,
     tensor_img = tf.convert_to_tensor(np.expand_dims(img, 0), dtype='float32')
 
     # maximize class score wrt image pixels
-    for n in tf.range(2048):
+    for n in tf.range(2000):
         with tf.GradientTape() as tape:
             tape.watch(tensor_img)
             output = modified_model(tensor_img)[0, class_idx]
@@ -468,15 +492,15 @@ def class_model(model,
     ax.set_yticks([])
 
 
-def maximally_activating_patches(model,
-                                 layer,
-                                 dataset=None,
-                                 X=None,
-                                 nested_model=None,
-                                 channel=None,
-                                 title=None):
+def image_patches(model,
+                  layer,
+                  dataset=None,
+                  X=None,
+                  nested_model=None,
+                  channel=None,
+                  title=None):
     '''
-    Visualizes maximally activating patches in `X` of a random intermediate neuron in `layer`, `channel`
+    Visualizes maximally activating image patches in `X` of a random intermediate neuron in `layer`, `channel`
 
     Parameters
     ----------
